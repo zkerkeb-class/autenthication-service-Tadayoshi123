@@ -1,0 +1,312 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "SupervIA - Authentication Service API",
+    "version": "1.0.0",
+    "description": "Service central pour la gestion de l'authentification des utilisateurs, des sessions, des tokens JWT, et des connexions via des fournisseurs OAuth2 (Google, GitHub, Auth0).",
+    "contact": {
+      "name": "Support Technique SupervIA",
+      "email": "support@supervia.com"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3001",
+      "description": "Serveur de développement local"
+    },
+    {
+      "url": "https://api.supervia.com/auth",
+      "description": "Serveur de production"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Token d'accès JWT obtenu après une connexion réussie."
+      }
+    },
+    "schemas": {
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "ID unique de l'utilisateur."
+          },
+          "firstName": {
+            "type": "string",
+            "description": "Prénom de l'utilisateur."
+          },
+          "lastName": {
+            "type": "string",
+            "description": "Nom de l'utilisateur."
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "Adresse e-mail de l'utilisateur."
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "user",
+              "admin"
+            ],
+            "description": "Rôle de l'utilisateur."
+          }
+        }
+      },
+      "Tokens": {
+        "type": "object",
+        "properties": {
+          "accessToken": {
+            "type": "string",
+            "description": "Token JWT pour accéder aux ressources protégées."
+          },
+          "refreshToken": {
+            "type": "string",
+            "description": "Token pour renouveler l'accessToken."
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/api/v1/auth/register": {
+      "post": {
+        "summary": "Inscrire un nouvel utilisateur.",
+        "tags": [
+          "Authentification Standard"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "firstName",
+                  "lastName",
+                  "email",
+                  "password"
+                ],
+                "properties": {
+                  "firstName": {
+                    "type": "string"
+                  },
+                  "lastName": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "password": {
+                    "type": "string",
+                    "format": "password"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Utilisateur créé avec succès. Retourne l'utilisateur et les tokens.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "user": {
+                      "$ref": "#/components/schemas/User"
+                    },
+                    "tokens": {
+                      "$ref": "#/components/schemas/Tokens"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Données d'entrée invalides ou l'email est déjà utilisé."
+          }
+        }
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "summary": "Connecter un utilisateur.",
+        "tags": [
+          "Authentification Standard"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "email",
+                  "password"
+                ],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "password": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Connexion réussie. Retourne l'utilisateur et les tokens.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "user": {
+                      "$ref": "#/components/schemas/User"
+                    },
+                    "tokens": {
+                      "$ref": "#/components/schemas/Tokens"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Identifiants incorrects."
+          }
+        }
+      }
+    },
+    "/api/v1/auth/me": {
+      "get": {
+        "summary": "Récupérer les informations de l'utilisateur actuellement connecté.",
+        "tags": [
+          "Authentification Standard"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Informations de l'utilisateur.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non autorisé (token manquant ou invalide)."
+          }
+        }
+      }
+    },
+    "/api/v1/health": {
+      "get": {
+        "summary": "Vérifie l'état de santé du service",
+        "tags": [
+          "Health"
+        ],
+        "description": "Retourne un statut simple indiquant que le service est en cours d'exécution et opérationnel.",
+        "responses": {
+          "200": {
+            "description": "Service sain et opérationnel"
+          },
+          "503": {
+            "description": "Le service est en panne ou une de ses dépendances critiques est inaccessible."
+          }
+        }
+      }
+    },
+    "/api/v1/oauth/{provider}": {
+      "get": {
+        "summary": "Rediriger vers la page de connexion du fournisseur OAuth2.",
+        "tags": [
+          "Authentification Sociale (OAuth2)"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "provider",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "google",
+                "github"
+              ]
+            },
+            "description": "Le fournisseur OAuth2 à utiliser."
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "Redirection vers la page d'authentification du fournisseur."
+          }
+        }
+      }
+    },
+    "/api/v1/oauth/{provider}/callback": {
+      "get": {
+        "summary": "Callback après l'authentification du fournisseur.",
+        "tags": [
+          "Authentification Sociale (OAuth2)"
+        ],
+        "description": "Le fournisseur redirige ici après une tentative de connexion. En cas de succès, le service génère des tokens et les retourne, souvent via des query params ou en postMessage au frontend.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "provider",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "google",
+                "github"
+              ]
+            },
+            "description": "Le fournisseur OAuth2 qui a répondu."
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "Redirection vers le frontend avec les tokens en query params (ou gestion d'une erreur)."
+          },
+          "500": {
+            "description": "Erreur interne lors de la gestion du callback."
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Authentification Standard",
+      "description": "Endpoints pour l'inscription, la connexion et la gestion des comptes utilisateurs."
+    },
+    {
+      "name": "Authentification Sociale (OAuth2)",
+      "description": "Endpoints pour l'authentification via des fournisseurs tiers comme Google ou GitHub."
+    }
+  ]
+}
