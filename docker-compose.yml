@@ -1,0 +1,42 @@
+services:
+  auth-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: supervia-auth-service
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - DB_SERVICE_URL=${DB_SERVICE_URL:-http://supervia-db-service:3002}
+      - JWT_SECRET=${JWT_SECRET}
+      - REDIS_URL=redis://supervia-redis:6379/1
+      - API_URL=${API_URL:-http://localhost:3001}
+      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:4000}
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:4000,http://localhost:3001}
+      - COOKIE_SECRET=${COOKIE_SECRET}
+      - NOTIFICATION_SERVICE_URL=${NOTIFICATION_SERVICE_URL:-http://supervia-notification-service:3005}
+    volumes:
+      - auth-keys:/app/keys
+      - auth-logs:/app/logs
+    networks:
+      - supervia-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+networks:
+  supervia-network:
+    external: true
+    name: infra_supervia-network # Le nom correct du réseau partagé
+
+volumes:
+  auth-keys:
+  auth-logs: 

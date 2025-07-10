@@ -1,0 +1,57 @@
+# ===================================
+# 📂 DOSSIERS DE DÉVELOPPEMENT
+# ===================================
+node_modules/
+coverage/
+.nyc_output/
+logs/
+temp/
+tmp/
+
+# ===================================
+# 📄 FICHIERS DE CONFIGURATION
+# ===================================
+.env
+.env.*
+!.env.example
+nodemon.json
+
+# ===================================
+# 🔧 OUTILS DE DÉVELOPPEMENT
+# ===================================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ===================================
+# 📊 FICHIERS DE BUILD ET CACHE
+# ===================================
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+.cache/
+dist/
+build/
+.prisma/
+
+# ===================================
+# 🔐 FICHIERS SENSIBLES
+# ===================================
+# Clés privées, certificats, etc.
+*.pem
+*.key
+*.crt
+secrets/
+.secrets/
+volumes/keys/*.pem
+volumes/keys/*.pub
+
+# ===================================
+# 📦 FICHIERS OS
+# ===================================
+.DS_Store
+Thumbs.db
+desktop.ini 
